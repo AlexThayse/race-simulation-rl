@@ -1,11 +1,13 @@
-numpy==1.18.4
-matplotlib==3.2.1
-pandas==1.0.4
-scipy==1.4.1
-# required in opt_strategy_basic
-cvxpy==1.1.7
-# required for VSE (supervised and reinforcement training and inferencing)
-tensorflow==2.2.0
-# required for VSE (reinforcement training)
-tensorflow-probability==0.10.1
-tf-agents==0.5.0
+pip<24.1
+setuptools<65.0.0
+wheel<0.40.0
+numpy==1.23.5
+scipy==1.7.3
+cvxpy==1.2.1
+matplotlib==3.5.3
+protobuf==3.20.3
+tensorflow==2.3.0
+torch
+scikit-learn
+pandas
+tqdm
