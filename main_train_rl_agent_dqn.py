@@ -41,7 +41,7 @@ import racesim
 race = "Shanghai_2019"  # set race (see racesim/input/parameters for possible races)
 # VSE type for other drivers: 'basestrategy', 'realstrategy', 'supervised', 'reinforcement' (if already available),
 # 'multi_agent' (if VSE should learn for all drivers at once)
-vse_others = "supervised"
+vse_others = "reinforcement"
 mcs_pars_file = "pars_mcs.ini"  # parameter file for Monte Carlo parameters
 
 # hyperparameters
