@@ -80,6 +80,7 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
         # environment inputs
         "__vse_type",             # determines which VSE (virtual strategy engineer) type is used for the other drivers
                                   # "supervised" or "reinforcement" or "basestrategy" or "realstrategy"
+        "__controlled_driver",    # initials of the driver controlled by the RL agent 
         "__use_prob_infl",        # boolean to set if probabilistic influences should be activated
         "__create_rand_events",   # boolean to activate the random creation of FCY (full course yellow) phases and
                                   # retirements in the race if the according entries in the parameter file
@@ -112,12 +113,14 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
                  mcs_pars_file: str,
                  vse_type: str = 'supervised',
                  use_prob_infl: bool = True,
-                 create_rand_events: bool = True) -> None:
+                 create_rand_events: bool = True,
+                 controlled_driver: str = None) -> None:
 
         # save race simulation parameters ------------------------------------------------------------------------------
         self.race_pars_file = race_pars_file
         self.mcs_pars_file = mcs_pars_file
         self.vse_type = vse_type
+        self.controlled_driver = controlled_driver
         self.use_prob_infl = use_prob_infl
         self.create_rand_events = create_rand_events
 
@@ -255,6 +258,12 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
     def __set_cat_preprocessor(self, x: machine_learning.src.preprocessor.Preprocessor): self.__cat_preprocessor = x
     cat_preprocessor = property(__get_cat_preprocessor, __set_cat_preprocessor)
 
+    def __get_controlled_driver(self):
+        return self.__controlled_driver
+    def __set_controlled_driver(self, value):
+        self.__controlled_driver = value
+    controlled_driver = property(__get_controlled_driver, __set_controlled_driver)
+
     # ------------------------------------------------------------------------------------------------------------------
     # METHODS ----------------------------------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------------------------------------------
@@ -290,8 +299,17 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
         for driver in self.pars_in['vse_pars']['vse_type']:
             self.pars_in['vse_pars']['vse_type'][driver] = self.vse_type
 
-        # choose random driver for current training episode
-        self.driver_initials = random.choice([initials for initials in self.pars_in["race_pars"]["participants"]])
+        # choose driver for current training episode
+        participants = self.pars_in["race_pars"]["participants"]
+        if self.controlled_driver is None:
+            self.driver_initials = random.choice(participants)
+        else:
+            if self.controlled_driver not in participants:
+                raise ValueError(
+                    f"Le pilote {self.controlled_driver} ne participe pas à cette course. "
+                    f"Participants : {participants}"
+                )
+            self.driver_initials = self.controlled_driver
 
         # set reinforcement driver for the training
         self.pars_in['vse_pars']['vse_type'][self.driver_initials] = 'reinforcement_training'

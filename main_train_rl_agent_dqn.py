@@ -38,10 +38,11 @@ import racesim
 # ----------------------------------------------------------------------------------------------------------------------
 
 # environment parameters
-race = "Shanghai_2019"  # set race (see racesim/input/parameters for possible races)
+race = "Spa_2019"  # set race (see racesim/input/parameters for possible races)
 # VSE type for other drivers: 'basestrategy', 'realstrategy', 'supervised', 'reinforcement' (if already available),
 # 'multi_agent' (if VSE should learn for all drivers at once)
-vse_others = "reinforcement"
+controlled_driver = "LEC"
+vse_others = "supervised"
 mcs_pars_file = "pars_mcs.ini"  # parameter file for Monte Carlo parameters
 
 # hyperparameters
@@ -64,7 +65,7 @@ eval_interval = 50_000
 num_eval_episodes = 100
 
 # postprocessing (currently not implemented for multi-agent environment)
-calculate_final_positions = False  # activate or deactivate evaluation after training
+calculate_final_positions = True  # activate or deactivate evaluation after training
 num_races_postproc = 10_000
 # VSE type for other drivers: 'basestrategy', 'realstrategy', 'supervised', 'reinforcement' (if already available)
 vse_others_postproc = "supervised"
@@ -118,13 +119,15 @@ else:
                        mcs_pars_file=mcs_pars_file,
                        vse_type=vse_others,
                        use_prob_infl=True,
-                       create_rand_events=True)
+                       create_rand_events=True,
+                       controlled_driver=controlled_driver)
     eval_py_env = machine_learning_rl_training.src.rl_environment_single_agent \
         .RaceSimulation(race_pars_file=race_pars_file,
                         mcs_pars_file=mcs_pars_file,
                         vse_type=vse_others,
                         use_prob_infl=True,
-                        create_rand_events=True)
+                        create_rand_events=True,
+                        controlled_driver=controlled_driver)
 
 train_tf_env = tf_py_environment.TFPyEnvironment(environment=train_py_env)
 eval_tf_env = tf_py_environment.TFPyEnvironment(environment=eval_py_env)
@@ -252,7 +255,7 @@ def compute_average_return(env: tf_py_environment.TFPyEnvironment,
 print("INFO: Starting training...")
 
 # (optional) optimize by wrapping some of the code in a graph using TF function
-agent.train = common.function(agent.train)
+# agent.train = common.function(agent.train)
 
 # reset the train step
 agent.train_step_counter.assign(0)
@@ -335,7 +338,8 @@ if calculate_final_positions:
                                                                                          mcs_pars_file=mcs_pars_file,
                                                                                          vse_type=vse_others,
                                                                                          use_prob_infl=True,
-                                                                                         create_rand_events=True)
+                                                                                         create_rand_events=True,
+                                                                                         controlled_driver=controlled_driver)
 
     machine_learning_rl_training.src.rl_evaluate_policy.print_returns_positions(py_env=py_env,
                                                                                 num_races=num_races_postproc,
