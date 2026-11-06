@@ -31,6 +31,7 @@ from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.trajectories import trajectory
 from tf_agents.utils import common
 import racesim
+import matplotlib.pyplot as plt
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -41,7 +42,7 @@ import racesim
 race = "Spa_2019"  # set race (see racesim/input/parameters for possible races)
 # VSE type for other drivers: 'basestrategy', 'realstrategy', 'supervised', 'reinforcement' (if already available),
 # 'multi_agent' (if VSE should learn for all drivers at once)
-controlled_driver = "LEC"
+controlled_driver = "HAM"
 vse_others = "supervised"
 mcs_pars_file = "pars_mcs.ini"  # parameter file for Monte Carlo parameters
 
@@ -264,6 +265,14 @@ agent.train_step_counter.assign(0)
 avg_return = compute_average_return(env=eval_tf_env, policy=eval_policy, num_episodes=num_eval_episodes)
 print("INFO: Evaluated the agent's policy once before the training, average return: %.3f" % avg_return)
 
+eval_steps = []
+eval_returns = []
+loss_steps = []
+loss_values = []
+
+# Initial evaluation
+eval_steps.append(0)
+eval_returns.append(float(avg_return))
 for _ in range(num_iterations):
     # collect a few steps using collect_policy and save them to the replay buffer
     for _ in range(collect_steps_per_iteration):
@@ -272,32 +281,51 @@ for _ in range(num_iterations):
     # sample a batch of data from the buffer and update the agent's network
     experience = next(dataset_iterator)[0]
     train_loss = agent.train(experience=experience).loss
-
     step = int(agent.train_step_counter.numpy())
+
+    loss_steps.append(step)
+    loss_values.append(float(train_loss.numpy()))
 
     if step % log_interval == 0:
         print('INFO: Step %i, loss %.3f' % (step, train_loss))
 
     if step % eval_interval == 0:
         avg_return = compute_average_return(env=eval_tf_env, policy=eval_policy, num_episodes=num_eval_episodes)
+        eval_steps.append(step)
+        eval_returns.append(float(avg_return))
         print('INFO: Step %i, average return %.3f' % (step, avg_return))
 
     if (10 * step) % num_iterations == 0:
         # print every 10%
         print('INFO: Training progress: %.0f%%...' % (step / num_iterations * 100.0))
 
+repo_path_ = os.path.dirname(os.path.abspath(__file__))
+output_path_ = os.path.join(repo_path_, 'machine_learning_rl_training', 'output')
+os.makedirs(output_path_, exist_ok=True)
+
+fig, axes = plt.subplots(2, 1, figsize=(10,8))
+
+axes[0].plot(eval_steps, eval_returns, marker="o")
+axes[0].set_title("Average return during evaluation")
+axes[0].set_xlabel("Iterations")
+axes[0].set_ylabel("Average return")
+axes[0].grid(True)
+
+axes[1].plot(loss_steps, loss_values)
+axes[1].set_title("Training loss of the DQN per iteration")
+axes[1].set_xlabel("Iterations")
+axes[1].set_ylabel("Loss")
+axes[1].grid(True)
+
+fig.tight_layout()
+fig.savefig(os.path.join(output_path_,"training_curves_%s.png" % race), dpi=150)
+plt.close(fig)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # SAVE Q-NETWORK AS TF-LITE --------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
-# set paths
-repo_path_ = os.path.dirname(os.path.abspath(__file__))
-output_path_ = os.path.join(repo_path_, 'machine_learning_rl_training', 'output')
 tmp_path_ = os.path.join(output_path_, 'tmp')
-
-# create folders if not existing
-os.makedirs(output_path_, exist_ok=True)
 os.makedirs(tmp_path_, exist_ok=True)
 
 # set file paths
