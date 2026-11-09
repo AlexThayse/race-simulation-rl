@@ -1,5 +1,5 @@
 import numpy as np
-import tensorflow as tf
+from machine_learning.src.model_inference import ModelInterpreter
 import pickle
 import machine_learning
 
@@ -38,7 +38,7 @@ class VSE_REINFORCEMENT(object):
         with open(preprocessor_path, 'rb') as fh:
             self.cat_preprocessor = pickle.load(fh)
 
-        self.nn_model = {"interpreter": tf.lite.Interpreter(model_path=nnmodel_path)}
+        self.nn_model = {"interpreter": ModelInterpreter(model_path=nnmodel_path)}
         self.X_conv = None
 
         # initialize tf lite interpreter

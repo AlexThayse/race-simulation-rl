@@ -17,30 +17,16 @@ main_train_rl_agent_dqn.py.
 from machine_learning_rl_training.src.rl_environment_single_agent import RaceSimulation
 import helper_funcs.src.progressbar
 import numpy as np
-import tensorflow as tf
-import tf_agents.trajectories
-
-
-def convert_time_step(time_step) -> tf_agents.trajectories.time_step.TimeStep:
-    """
-    This function converts a given time_step from a Python environment to a TF time_step.
-    """
-
-    time_step = tf_agents.trajectories.time_step.\
-        TimeStep(step_type=tf.constant([time_step.step_type], dtype=np.int32),
-                 reward=tf.constant([time_step.reward], dtype=np.float32),
-                 discount=tf.constant([time_step.discount], dtype=np.float32),
-                 observation=tf.convert_to_tensor([time_step.observation], dtype=np.float32))
-
-    return time_step
+import matplotlib.pyplot as plt
+from machine_learning.src.model_inference import ModelInterpreter
 
 
 def print_returns_positions(py_env: RaceSimulation,
                             num_races: int,
-                            tf_lite_path: str,
+                            model_path: str,
                             vse_others: str = None):
     """
-    This function calculates the returns and final positions with a given q_network as tf-lite over num_races (episodes)
+    Calculate returns and final positions with a PyTorch or TFLite q-network over num_races episodes
     and distinguishes the returns and positions of races with FCY phases and races without FCY phases.
 
     vse_others: set VSE type of other drivers -> "supervised" or "reinforcement" or "basestrategy" or "realstrategy"
@@ -51,8 +37,8 @@ def print_returns_positions(py_env: RaceSimulation,
     else:
         vse_others = py_env.vse_type
 
-    # initialize TF lite q-network
-    q_net_lite = {"interpreter": tf.lite.Interpreter(model_path=tf_lite_path)}
+    # initialize q-network
+    q_net_lite = {"interpreter": ModelInterpreter(model_path=model_path)}
     q_net_lite["interpreter"].allocate_tensors()
     q_net_lite["input_index"] = q_net_lite["interpreter"].get_input_details()[0]['index']
     q_net_lite["output_index"] = q_net_lite["interpreter"].get_output_details()[0]['index']
@@ -75,7 +61,8 @@ def print_returns_positions(py_env: RaceSimulation,
 
         while not time_step.is_last():
             # set NN input
-            q_net_lite["interpreter"].set_tensor(q_net_lite["input_index"], convert_time_step(time_step).observation)
+            q_net_lite["interpreter"].set_tensor(
+                q_net_lite["input_index"], np.expand_dims(time_step.observation, axis=0))
 
             # invoke NN
             q_net_lite["interpreter"].invoke()
@@ -115,8 +102,8 @@ def print_returns_positions(py_env: RaceSimulation,
              len(fcy_returns),
              len(nofcy_returns)))
 
-    fig, axes = plt.subplots(1, 3, figsize=(15,4))
-    
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
     axes[0].hist(all_returns, bins=30)
     axes[0].set_title("Returns per race")
     axes[0].set_xlabel("Return")

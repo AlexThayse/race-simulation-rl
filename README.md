@@ -26,7 +26,22 @@ contain .csv files with lap times, race times, and positions in each lap.
 Use the provided `requirements.txt` in the root directory of this repo, in order to install all required modules.\
 `pip3 install -r /path/to/requirements.txt`
 
-The code was developed with Python 3.8 on Windows 10 and tested with Python 3.8 on Ubuntu.
+Use Python 3.12 and a fresh virtual environment (the original Python 3.8 environment is not compatible):
+
+```bash
+python3.12 -m venv venv_pytorch
+source venv_pytorch/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+On Windows, activate with `venv_pytorch\Scripts\Activate.ps1`.
+Training now uses PyTorch, retaining DQN, Boltzmann exploration, the existing rewards and single-/multi-agent modes.
+TensorFlow and TF-Agents are no longer required. Bundled `.tflite` models are read using LiteRT;
+new policies are saved as PyTorch state-dict `.pt` files with their existing `.pkl` preprocessors.
+Copy both output files to `racesim/input/vse` to use a trained policy in the simulator.
+When both formats exist for a race, the simulator prefers `.pt` over `.tflite`.
+The migration guide describes an earlier proposal; the implemented training remains DQN without SB3 or Gymnasium.
 
 ## Solutions for possible installation problems (Windows)
 `cvxpy`, `cython` or any other package requires a `Visual C++ compiler` -> Download the build tools for Visual Studio

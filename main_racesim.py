@@ -5,7 +5,6 @@ from concurrent import futures  # required for parallel computing
 import numpy as np
 import time
 import os
-import pkg_resources
 import pickle
 
 """
@@ -39,7 +38,6 @@ with open(requirements_path, 'r') as fh_:
         line = fh_.readline()
 
 # check dependencies
-# pkg_resources.require(dependencies)
 
 
 # ----------------------------------------------------------------------------------------------------------------------

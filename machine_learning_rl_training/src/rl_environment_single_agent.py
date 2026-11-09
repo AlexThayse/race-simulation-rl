@@ -17,14 +17,12 @@ main_train_rl_agent_dqn.py.
 import racesim
 import machine_learning
 import math
+from machine_learning_rl_training.src import environment
 import random
 import numpy as np
-import tf_agents.environments
-import tf_agents.specs
-import tf_agents.trajectories
 
 
-class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
+class RaceSimulation(environment.RaceEnvironment):
     """
     Description:
         This environment is based on the race simulation. The race simulation calculates the lap times for each driver.
@@ -80,7 +78,7 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
         # environment inputs
         "__vse_type",             # determines which VSE (virtual strategy engineer) type is used for the other drivers
                                   # "supervised" or "reinforcement" or "basestrategy" or "realstrategy"
-        "__controlled_driver",    # initials of the driver controlled by the RL agent 
+        "__controlled_driver",    # initials of the driver controlled by the RL agent
         "__use_prob_infl",        # boolean to set if probabilistic influences should be activated
         "__create_rand_events",   # boolean to activate the random creation of FCY (full course yellow) phases and
                                   # retirements in the race if the according entries in the parameter file
@@ -98,7 +96,7 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
         "__race",                        # race object
         # preprocessor -------------------------------------------------------------------------------------------------
         "__cat_preprocessor",            # preprocessor for categorical features
-        # tf-agents ----------------------------------------------------------------------------------------------------
+        # environment --------------------------------------------------------------------------------------------------
         "_action_spec",                  # action spec of the environment
         "_observation_spec",             # observation spec of a time step
         "_episode_ended",                # true if race is finished
@@ -180,19 +178,13 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
 
         self.cat_preprocessor.fit(X=X_cat_fit)
 
-        # tf-agent -----------------------------------------------------------------------------------------------------
-        self._action_spec = tf_agents.specs.array_spec.BoundedArraySpec(shape=(),
-                                                                        dtype=np.int32,
-                                                                        minimum=0,
-                                                                        maximum=len(self.available_compounds),
-                                                                        name='action')
-
-        self._observation_spec = tf_agents.specs.array_spec.\
-            BoundedArraySpec(shape=(17 + len(self.available_compounds) + len(self.all_driver_initials),),
-                             dtype=np.float32,
-                             minimum=0.0,
-                             maximum=1.0,
-                             name='observation')
+        # Framework-independent array specifications.
+        self._action_spec = environment.ArraySpec(
+            shape=(), dtype=np.int32, minimum=0,
+            maximum=len(self.available_compounds), name='action')
+        self._observation_spec = environment.ArraySpec(
+            shape=(17 + len(self.available_compounds) + len(self.all_driver_initials),),
+            dtype=np.float32, minimum=0.0, maximum=1.0, name='observation')
 
         self._episode_ended = False
 
@@ -260,6 +252,7 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
 
     def __get_controlled_driver(self):
         return self.__controlled_driver
+
     def __set_controlled_driver(self, value):
         self.__controlled_driver = value
     controlled_driver = property(__get_controlled_driver, __set_controlled_driver)
@@ -554,7 +547,7 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
 
         return reward
 
-    def __calculate_reward_position(self, delta_position: np.int32) -> np.float:
+    def __calculate_reward_position(self, delta_position: np.int32) -> float:
         """
         This method returns an reward of +5.0/-5.0 for each position the driver won/lost until the next pit stop
         decision.
@@ -592,7 +585,7 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
 
         return reward
 
-    def _reset(self) -> tf_agents.trajectories.time_step.TimeStep:
+    def _reset(self) -> environment.TimeStep:
         """
         This method resets the race, creates a new race object, and returns the observation at the first pit stop
         decision.
@@ -617,9 +610,9 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
         # get the observation after the first lap and before first pit stop decision
         observation = self.__calculate_observation()
 
-        return tf_agents.trajectories.time_step.restart(observation=observation)
+        return environment.restart(observation=observation)
 
-    def _step(self, action) -> tf_agents.trajectories.time_step.TimeStep:
+    def _step(self, action) -> environment.TimeStep:
         """
         This method returns the next time step with the observation and reward depending on the chosen action.
         Action == 0: no pit stop, action > 0: pit stop and choose available_compounds[action + 1] as next compound
@@ -683,7 +676,7 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
             if self.race.result_status != 0:
                 print("WARNING: Simulation result was invalid!")
 
-            return tf_agents.trajectories.time_step.termination(observation=observation, reward=reward)
+            return environment.termination(observation=observation, reward=reward)
 
         else:
-            return tf_agents.trajectories.time_step.transition(observation=observation, reward=reward, discount=1.0)
+            return environment.transition(observation=observation, reward=reward, discount=1.0)

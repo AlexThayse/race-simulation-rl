@@ -229,7 +229,7 @@ class Preprocessor(object):
             elif raw_idx in self.idxs_cat or raw_idx in self.idxs_buck:
                 # get index of True value in every row of the one-hot encoded feature
                 idx_true = \
-                    np.nonzero(X_conv_[:, conv_idx:conv_idx + self.col_info[raw_idx]['no_classes']].astype(np.bool))[1]
+                    np.nonzero(X_conv_[:, conv_idx:conv_idx + self.col_info[raw_idx]['no_classes']].astype(bool))[1]
 
                 # in the case of bucketized data the last bin entry is inf -> use previous entry + 1 instead
                 if np.isinf(self.col_info[raw_idx]['bins'][-1]):

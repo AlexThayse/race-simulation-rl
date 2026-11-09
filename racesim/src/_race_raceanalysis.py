@@ -127,7 +127,7 @@ class RaceAnalysis(object):
                 best_t_laps[idx] = np.nanmin(self.laptimes[1:, idx])
 
         # get number of laps
-        no_laps = np.zeros(self.no_drivers, dtype=np.int)
+        no_laps = np.zeros(self.no_drivers, dtype=int)
 
         for idx in range(self.no_drivers):
             no_laps[idx] = self.get_last_compl_lap(idx=idx)
@@ -173,14 +173,14 @@ class RaceAnalysis(object):
                          for cur_driver in self.drivers_list]
 
         # convert to pandas
-        tmp_pos = pd.DataFrame(self.positions[-1], columns=['pos'], index=driver_initials, dtype=np.int)
-        tmp_carno = pd.DataFrame(carnos, columns=['carno'], index=driver_initials, dtype=np.int)
+        tmp_pos = pd.DataFrame(self.positions[-1], columns=['pos'], index=driver_initials, dtype=int)
+        tmp_carno = pd.DataFrame(carnos, columns=['carno'], index=driver_initials, dtype=int)
         tmp_t_race = pd.DataFrame(self.racetimes[no_laps, np.arange(self.no_drivers)], columns=['t_race'],
                                   index=driver_initials)
         tmp_gap = pd.DataFrame(gaps, columns=['gap'], index=driver_initials)
         tmp_int = pd.DataFrame(ints, columns=['int'], index=driver_initials)
         tmp_best_t_lap = pd.DataFrame(best_t_laps, columns=['best_t_lap'], index=driver_initials)
-        tmp_no_laps = pd.DataFrame(no_laps, columns=['no_laps'], index=driver_initials, dtype=np.int)
+        tmp_no_laps = pd.DataFrame(no_laps, columns=['no_laps'], index=driver_initials, dtype=int)
         tmp_status = pd.DataFrame(status, columns=['status'], index=driver_initials, dtype=np.str)
         tmp_strategy_info = pd.DataFrame(strategy_info, columns=['strategy_info'], index=driver_initials, dtype=np.str)
         result = pd.concat((tmp_pos, tmp_carno, tmp_t_race, tmp_gap, tmp_int, tmp_best_t_lap, tmp_no_laps,
@@ -228,9 +228,9 @@ class RaceAnalysis(object):
         driver_initials = [cur_driver.initials for cur_driver in self.drivers_list]
 
         # create empty leaderboard as pandas dataframe
-        tmp_lap = pd.DataFrame(np.zeros(self.no_drivers, dtype=np.int), columns=["lap"], index=driver_initials)
-        tmp_pos = pd.DataFrame(np.zeros(self.no_drivers, dtype=np.int), columns=["pos"], index=driver_initials)
-        tmp_est_pos = pd.DataFrame(np.zeros(self.no_drivers, dtype=np.int), columns=["est_pos"], index=driver_initials)
+        tmp_lap = pd.DataFrame(np.zeros(self.no_drivers, dtype=int), columns=["lap"], index=driver_initials)
+        tmp_pos = pd.DataFrame(np.zeros(self.no_drivers, dtype=int), columns=["pos"], index=driver_initials)
+        tmp_est_pos = pd.DataFrame(np.zeros(self.no_drivers, dtype=int), columns=["est_pos"], index=driver_initials)
         tmp_laptime = pd.DataFrame(np.zeros(self.no_drivers), columns=["last_laptime"], index=driver_initials)
         tmp_fraction = pd.DataFrame(np.zeros(self.no_drivers), columns=["est_fraction"], index=driver_initials)
         tmp_racetime = pd.DataFrame(np.zeros(self.no_drivers), columns=["last_racetime"], index=driver_initials)

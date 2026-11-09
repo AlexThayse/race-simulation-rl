@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-import tensorflow as tf
+from machine_learning.src.model_inference import ModelInterpreter
 
 
 class VSE_SUPERVISED(object):
@@ -47,8 +47,8 @@ class VSE_SUPERVISED(object):
         with open(preprocessor_tc_path, 'rb') as fh:
             self.preprocessor_tc = pickle.load(fh)
 
-        self.nnmodel_cc = {"interpreter": tf.lite.Interpreter(model_path=nnmodel_cc_path)}
-        self.nnmodel_tc = {"interpreter": tf.lite.Interpreter(model_path=nnmodel_tc_path)}
+        self.nnmodel_cc = {"interpreter": ModelInterpreter(model_path=nnmodel_cc_path)}
+        self.nnmodel_tc = {"interpreter": ModelInterpreter(model_path=nnmodel_tc_path)}
 
         self.X_conv_cc = None
         self.X_conv_tc = None
@@ -219,7 +219,8 @@ class VSE_SUPERVISED(object):
             self.nnmodel_tc["interpreter"].invoke()
 
             # fetch NN output
-            pitstop_probs[idx_driver] = self.nnmodel_tc["interpreter"].get_tensor(self.nnmodel_tc["output_index"])
+            pitstop_probs[idx_driver] = (
+                self.nnmodel_tc["interpreter"].get_tensor(self.nnmodel_tc["output_index"]).item())
 
         # get indices of the drivers that have a predicted pitstop probability above 50%
         idxs_driver_pitstop = list(np.flatnonzero(np.round(pitstop_probs)))

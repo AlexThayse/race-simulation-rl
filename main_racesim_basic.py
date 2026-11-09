@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 import racesim_basic
 import os
-import pkg_resources
 import helper_funcs.src.calc_tire_degradation
 
 """
@@ -44,7 +43,6 @@ with open(requirements_path, 'r') as fh_:
         line = fh_.readline()
 
 # check dependencies
-# pkg_resources.require(dependencies)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -434,7 +432,7 @@ if __name__ == '__main__':
             # plot 2 stop strategies -----------------------------------------------------------------------------------
             for cur_comp_strat_ in t_race_full_factorial_[2]:
                 fig = plt.figure()
-                ax = fig.gca(projection='3d')
+                ax = fig.add_subplot(111, projection='3d')
 
                 laps_tmp_ = np.arange(1, pars_in_['race_pars']["tot_no_laps"] + 1)
                 x_, y_ = np.meshgrid(laps_tmp_[:-1], laps_tmp_[:-1])  # -1 as race must not be finished in pit

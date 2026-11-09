@@ -153,6 +153,10 @@ def import_pars(use_print: bool, use_vse: bool, race_pars_file: str, mcs_pars_fi
         # NN model
         nn_tflite = "nn_reinforcement_%s_%i.tflite" % (pars_in["track_pars"]["name"], pars_in["race_pars"]["season"])
 
+        nn_torch = nn_tflite.replace('.tflite', '.pt')
+        if os.path.isfile(os.path.join(vse_path, nn_torch)):
+            nn_tflite = nn_torch
+
         if not os.path.isfile(os.path.join(vse_path, nn_tflite)) \
                 and 'reinforcement' in [pars_in['vse_pars']['vse_type'][x] for x in pars_in['vse_pars']['vse_type']]:
             raise RuntimeError("NN model file is not available in the input path (%s)! Was it possibly one of the"

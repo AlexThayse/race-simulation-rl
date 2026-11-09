@@ -2,7 +2,6 @@ import numpy as np
 from racesim.src.driver import Driver
 import math
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # set logging level such that TF shows only errors
 from racesim.src.vse_supervised import VSE_SUPERVISED
 from racesim.src.vse_reinforcement import VSE_REINFORCEMENT
 from racesim.src.vse_basestrategy import VSE_BASESTRATEGY
@@ -718,7 +717,7 @@ class VSE(object):
                 pos_back_b = None
 
             if pos_back_b is not None:
-                aheads_prevlap[idx_driver] = racetimes_prevlap[pos_back_b] - racetimes_prevlap[pos_cur_b]
+                aheads_prevlap[idx_driver] = (racetimes_prevlap[pos_back_b] - racetimes_prevlap[pos_cur_b]).item()
             else:
                 aheads_prevlap[idx_driver] = np.inf
 
@@ -857,8 +856,8 @@ class VSE(object):
                                                 tot_no_laps=tot_no_laps,
                                                 fcy_types=[fcy_types_tmp],
                                                 fcy_start_end_progs=[fcy_start_end_progs_tmp],
-                                                bool_driving=np.ones(1, dtype=np.bool),
-                                                bool_driving_prevlap=np.ones(1, dtype=np.bool),
+                                                bool_driving=np.ones(1, dtype=bool),
+                                                bool_driving_prevlap=np.ones(1, dtype=bool),
                                                 racetimes_prevlap=np.zeros(1),
                                                 location=location,
                                                 used_2compounds=[used_2compounds_tmp],

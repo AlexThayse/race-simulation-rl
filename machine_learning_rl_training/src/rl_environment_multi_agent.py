@@ -17,14 +17,11 @@ main_train_rl_agent_dqn.py.
 import racesim
 import machine_learning
 import math
+from machine_learning_rl_training.src import environment
 import numpy as np
-import tf_agents.environments
-import tf_agents.specs
-import tf_agents.trajectories
-import tf_agents.utils
 
 
-class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
+class RaceSimulation(environment.RaceEnvironment):
     """
     Description:
         This environment is based on the race simulation. The race simulation calculates the lap times for each driver.
@@ -94,7 +91,7 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
         "__race",                        # race object
         # preprocessor -------------------------------------------------------------------------------------------------
         "__cat_preprocessor",            # preprocessor for categorical features
-        # tf-agents ----------------------------------------------------------------------------------------------------
+        # environment --------------------------------------------------------------------------------------------------
         "_action_spec",                  # action spec of the environment
         "_observation_spec",             # observation spec of a time step
         "_episode_ended",                # true if race is finished
@@ -168,19 +165,13 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
 
         self.cat_preprocessor.fit(X=X_cat_fit)
 
-        # tf-agent -----------------------------------------------------------------------------------------------------
-        self._action_spec = tf_agents.specs.array_spec.BoundedArraySpec(shape=(),
-                                                                        dtype=np.int32,
-                                                                        minimum=0,
-                                                                        maximum=len(self.available_compounds),
-                                                                        name='action')
-
-        self._observation_spec = tf_agents.specs.array_spec.\
-            BoundedArraySpec(shape=(17 + len(self.available_compounds) + len(self.all_driver_initials),),
-                             dtype=np.float32,
-                             minimum=0.0,
-                             maximum=1.0,
-                             name='observation')
+        # Framework-independent array specifications.
+        self._action_spec = environment.ArraySpec(
+            shape=(), dtype=np.int32, minimum=0,
+            maximum=len(self.available_compounds), name='action')
+        self._observation_spec = environment.ArraySpec(
+            shape=(17 + len(self.available_compounds) + len(self.all_driver_initials),),
+            dtype=np.float32, minimum=0.0, maximum=1.0, name='observation')
 
         self._episode_ended = False
         self.batch_size = self.race.no_drivers
@@ -568,7 +559,7 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
 
         return rewards
 
-    def _reset(self) -> tf_agents.trajectories.time_step.TimeStep:
+    def _reset(self) -> environment.TimeStep:
         """
         This method resets the race, creates a new race object, and returns the observation at the first pit stop
         decision.
@@ -588,12 +579,12 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
 
         # get the observations after the first lap and before first pit stop decision
         observations = self.__calculate_observations()
-        time_steps = [tf_agents.trajectories.time_step.restart(observation=observations[idx])
+        time_steps = [environment.restart(observation=observations[idx])
                       for idx in range(self.race.no_drivers)]
 
-        return tf_agents.utils.nest_utils.stack_nested_arrays(nested_arrays=time_steps)
+        return environment.stack_time_steps(nested_arrays=time_steps)
 
-    def _step(self, actions) -> tf_agents.trajectories.time_step.TimeStep:
+    def _step(self, actions) -> environment.TimeStep:
         """
         This method returns the next time step with the observation and reward depending on the chosen action.
         Action == 0: no pit stop, action > 0: pit stop and choose available_compounds[action + 1] as next compound
@@ -659,16 +650,16 @@ class RaceSimulation(tf_agents.environments.py_environment.PyEnvironment):
             if self.race.result_status != 0:
                 print("WARNING: Simulation result was invalid!")
 
-            time_steps = [tf_agents.trajectories.time_step.termination(observation=observations[idx],
-                                                                       reward=rewards[idx])
+            time_steps = [environment.termination(observation=observations[idx],
+                                                  reward=rewards[idx])
                           for idx in range(self.race.no_drivers)]
 
-            return tf_agents.utils.nest_utils.stack_nested_arrays(nested_arrays=time_steps)
+            return environment.stack_time_steps(nested_arrays=time_steps)
 
         else:
-            time_steps = [tf_agents.trajectories.time_step.transition(observation=observations[idx],
-                                                                      reward=rewards[idx],
-                                                                      discount=1.0)
+            time_steps = [environment.transition(observation=observations[idx],
+                                                 reward=rewards[idx],
+                                                 discount=1.0)
                           for idx in range(self.race.no_drivers)]
 
-            return tf_agents.utils.nest_utils.stack_nested_arrays(nested_arrays=time_steps)
+            return environment.stack_time_steps(nested_arrays=time_steps)
